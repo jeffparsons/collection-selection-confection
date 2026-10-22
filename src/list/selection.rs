@@ -112,6 +112,16 @@ impl<'a, T> SelectionMut<'a, T> {
         self.end += 1;
     }
 
+    pub fn insert_at_start(&mut self, value: T) {
+        self.list.items.insert(self.start, value);
+        self.end += 1;
+    }
+
+    pub fn insert_at_end(&mut self, value: T) {
+        self.list.items.insert(self.end, value);
+        self.end += 1;
+    }
+
     pub fn insert_after_end(&mut self, value: T) {
         self.list.items.insert(self.end, value);
     }
@@ -230,6 +240,35 @@ mod tests {
         selection.insert_after_end(2);
         assert_eq!(selection.iter().copied().collect::<Vec<_>>(), [1]);
         assert_eq!(list.items, [0, 1, 2]);
+    }
+
+    #[test]
+    fn insert_inside_selection() {
+        let mut list = list_of(&[0, 2, 4]);
+        let mut selection = list.cursor_mut_at_start().into_selection();
+        selection.move_end_next();
+        selection.move_end_next();
+        selection.move_start_next();
+        selection.insert_at_start(1);
+        selection.insert_at_end(3);
+        assert_eq!(selection.iter().copied().collect::<Vec<_>>(), [1, 2, 3]);
+        assert_eq!(selection.peek_before_start(), Some(&0));
+        assert_eq!(selection.peek_after_end(), Some(&4));
+        assert_eq!(list.items, [0, 1, 2, 3, 4]);
+    }
+
+    #[test]
+    fn insert_inside_empty_selection() {
+        let mut list = list_of(&[0, 3]);
+        let mut selection = list.cursor_mut_at_start().into_selection();
+        selection.move_end_next();
+        selection.move_start_next();
+        selection.insert_at_start(2);
+        selection.insert_at_start(1);
+        assert_eq!(selection.len(), 2);
+        assert_eq!(selection.first(), Some(&1));
+        assert_eq!(selection.last(), Some(&2));
+        assert_eq!(list.items, [0, 1, 2, 3]);
     }
 
     #[test]
