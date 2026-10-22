@@ -1,6 +1,8 @@
 mod cursor;
+mod selection;
 
 pub use cursor::CursorMut;
+pub use selection::SelectionMut;
 
 /// A doubly-linked list.
 ///

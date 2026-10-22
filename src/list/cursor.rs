@@ -1,4 +1,5 @@
 use super::LinkedList;
+use super::selection::SelectionMut;
 
 // Not bothering with an immutable cursor for now.
 pub struct CursorMut<'a, T> {
@@ -9,6 +10,10 @@ pub struct CursorMut<'a, T> {
 impl<'a, T> CursorMut<'a, T> {
     pub(super) fn new(list: &'a mut LinkedList<T>, index: usize) -> Self {
         Self { list, index }
+    }
+
+    pub fn into_selection(self) -> SelectionMut<'a, T> {
+        SelectionMut::new(self.list, self.index, self.index)
     }
 
     pub fn move_left(&mut self) -> bool {
