@@ -16,7 +16,7 @@ impl<'a, T> CursorMut<'a, T> {
         SelectionMut::new(self.list, self.index, self.index)
     }
 
-    pub fn move_left(&mut self) -> bool {
+    pub fn move_prev(&mut self) -> bool {
         if self.index == 0 {
             return false;
         }
@@ -24,7 +24,7 @@ impl<'a, T> CursorMut<'a, T> {
         true
     }
 
-    pub fn move_right(&mut self) -> bool {
+    pub fn move_next(&mut self) -> bool {
         if self.index == self.list.items.len() {
             return false;
         }
@@ -32,34 +32,34 @@ impl<'a, T> CursorMut<'a, T> {
         true
     }
 
-    pub fn peek_left(&self) -> Option<&T> {
+    pub fn peek_before(&self) -> Option<&T> {
         let i = self.index.checked_sub(1)?;
         self.list.items.get(i)
     }
 
-    pub fn peek_right(&self) -> Option<&T> {
+    pub fn peek_after(&self) -> Option<&T> {
         self.list.items.get(self.index)
     }
 
-    pub fn peek_left_mut(&mut self) -> Option<&mut T> {
+    pub fn peek_before_mut(&mut self) -> Option<&mut T> {
         let i = self.index.checked_sub(1)?;
         self.list.items.get_mut(i)
     }
 
-    pub fn peek_right_mut(&mut self) -> Option<&mut T> {
+    pub fn peek_after_mut(&mut self) -> Option<&mut T> {
         self.list.items.get_mut(self.index)
     }
 
-    pub fn insert_left(&mut self, value: T) {
+    pub fn insert_before(&mut self, value: T) {
         self.list.items.insert(self.index, value);
         self.index += 1;
     }
 
-    pub fn insert_right(&mut self, value: T) {
+    pub fn insert_after(&mut self, value: T) {
         self.list.items.insert(self.index, value);
     }
 
-    pub fn remove_left(&mut self) -> Option<T> {
+    pub fn remove_before(&mut self) -> Option<T> {
         if self.index == 0 {
             return None;
         }
@@ -67,31 +67,31 @@ impl<'a, T> CursorMut<'a, T> {
         Some(self.list.items.remove(self.index))
     }
 
-    pub fn remove_right(&mut self) -> Option<T> {
+    pub fn remove_after(&mut self) -> Option<T> {
         if self.index == self.list.items.len() {
             return None;
         }
         Some(self.list.items.remove(self.index))
     }
 
-    pub fn splice_left(&mut self, other: LinkedList<T>) {
+    pub fn splice_before(&mut self, other: LinkedList<T>) {
         let len = other.items.len();
         self.list.items.splice(self.index..self.index, other.items);
         self.index += len;
     }
 
-    pub fn splice_right(&mut self, other: LinkedList<T>) {
+    pub fn splice_after(&mut self, other: LinkedList<T>) {
         self.list.items.splice(self.index..self.index, other.items);
     }
 
-    pub fn split_left(&mut self) -> LinkedList<T> {
-        let right = self.list.items.split_off(self.index);
-        let left = std::mem::replace(&mut self.list.items, right);
+    pub fn split_before(&mut self) -> LinkedList<T> {
+        let after = self.list.items.split_off(self.index);
+        let before = std::mem::replace(&mut self.list.items, after);
         self.index = 0;
-        LinkedList { items: left }
+        LinkedList { items: before }
     }
 
-    pub fn split_right(&mut self) -> LinkedList<T> {
+    pub fn split_after(&mut self) -> LinkedList<T> {
         LinkedList {
             items: self.list.items.split_off(self.index),
         }
@@ -104,80 +104,80 @@ mod tests {
     use crate::list::tests::list_of;
 
     #[test]
-    fn insert_left_into_empty() {
+    fn insert_before_into_empty() {
         let mut list = LinkedList::new();
-        list.cursor_mut_at_start().insert_left(1);
+        list.cursor_mut_at_start().insert_before(1);
         assert_eq!(list.items, [1]);
     }
 
     #[test]
-    fn insert_left_twice_keeps_order() {
+    fn insert_before_twice_keeps_order() {
         let mut list = LinkedList::new();
         let mut cursor = list.cursor_mut_at_start();
-        cursor.insert_left(1);
-        cursor.insert_left(2);
+        cursor.insert_before(1);
+        cursor.insert_before(2);
         assert_eq!(list.items, [1, 2]);
     }
 
     #[test]
-    fn insert_right_twice_keeps_order() {
+    fn insert_after_twice_keeps_order() {
         let mut list = LinkedList::new();
         let mut cursor = list.cursor_mut_at_start();
-        cursor.insert_right(2);
-        cursor.insert_right(1);
-        assert_eq!(cursor.peek_left(), None);
-        assert_eq!(cursor.peek_right(), Some(&1));
+        cursor.insert_after(2);
+        cursor.insert_after(1);
+        assert_eq!(cursor.peek_before(), None);
+        assert_eq!(cursor.peek_after(), Some(&1));
         assert_eq!(list.items, [1, 2]);
     }
 
     #[test]
     fn peek_around_cursor() {
         let mut list = LinkedList::new();
-        list.cursor_mut_at_start().insert_left(1);
+        list.cursor_mut_at_start().insert_before(1);
         let mut cursor = list.cursor_mut_at_start();
-        assert_eq!(cursor.peek_left(), None);
-        assert_eq!(cursor.peek_right(), Some(&1));
-        cursor.insert_left(0);
-        assert_eq!(cursor.peek_left(), Some(&0));
-        assert_eq!(cursor.peek_right(), Some(&1));
+        assert_eq!(cursor.peek_before(), None);
+        assert_eq!(cursor.peek_after(), Some(&1));
+        cursor.insert_before(0);
+        assert_eq!(cursor.peek_before(), Some(&0));
+        assert_eq!(cursor.peek_after(), Some(&1));
     }
 
     #[test]
     fn peek_mut_modifies_values() {
         let mut list = LinkedList::new();
-        list.cursor_mut_at_start().insert_left(1);
+        list.cursor_mut_at_start().insert_before(1);
         let mut cursor = list.cursor_mut_at_start();
-        cursor.insert_left(0);
-        *cursor.peek_left_mut().unwrap() += 10;
-        *cursor.peek_right_mut().unwrap() += 20;
+        cursor.insert_before(0);
+        *cursor.peek_before_mut().unwrap() += 10;
+        *cursor.peek_after_mut().unwrap() += 20;
         assert_eq!(list.items, [10, 21]);
     }
 
     #[test]
-    fn split_left_takes_elements_before_cursor() {
+    fn split_before_takes_elements_before_cursor() {
         let mut list = LinkedList::new();
-        list.cursor_mut_at_start().insert_left(2);
+        list.cursor_mut_at_start().insert_before(2);
         let mut cursor = list.cursor_mut_at_start();
-        cursor.insert_left(0);
-        cursor.insert_left(1);
-        let left = cursor.split_left();
-        assert_eq!(cursor.peek_left(), None);
-        assert_eq!(cursor.peek_right(), Some(&2));
-        assert_eq!(left.items, [0, 1]);
+        cursor.insert_before(0);
+        cursor.insert_before(1);
+        let before = cursor.split_before();
+        assert_eq!(cursor.peek_before(), None);
+        assert_eq!(cursor.peek_after(), Some(&2));
+        assert_eq!(before.items, [0, 1]);
         assert_eq!(list.items, [2]);
     }
 
     #[test]
-    fn split_right_takes_elements_after_cursor() {
+    fn split_after_takes_elements_after_cursor() {
         let mut list = LinkedList::new();
-        list.cursor_mut_at_start().insert_left(2);
+        list.cursor_mut_at_start().insert_before(2);
         let mut cursor = list.cursor_mut_at_start();
-        cursor.insert_left(0);
-        cursor.insert_left(1);
-        let right = cursor.split_right();
-        assert_eq!(cursor.peek_left(), Some(&1));
-        assert_eq!(cursor.peek_right(), None);
-        assert_eq!(right.items, [2]);
+        cursor.insert_before(0);
+        cursor.insert_before(1);
+        let after = cursor.split_after();
+        assert_eq!(cursor.peek_before(), Some(&1));
+        assert_eq!(cursor.peek_after(), None);
+        assert_eq!(after.items, [2]);
         assert_eq!(list.items, [0, 1]);
     }
 
@@ -185,58 +185,58 @@ mod tests {
     fn cursor_at_end_peeks_last() {
         let mut list = list_of(&[0, 1]);
         let cursor = list.cursor_mut_at_end();
-        assert_eq!(cursor.peek_left(), Some(&1));
-        assert_eq!(cursor.peek_right(), None);
+        assert_eq!(cursor.peek_before(), Some(&1));
+        assert_eq!(cursor.peek_after(), None);
     }
 
     #[test]
     fn move_stops_at_ends() {
         let mut list = list_of(&[0, 1]);
         let mut cursor = list.cursor_mut_at_start();
-        assert!(!cursor.move_left());
-        assert!(cursor.move_right());
-        assert_eq!(cursor.peek_left(), Some(&0));
-        assert_eq!(cursor.peek_right(), Some(&1));
-        assert!(cursor.move_right());
-        assert!(!cursor.move_right());
-        assert_eq!(cursor.peek_left(), Some(&1));
-        assert!(cursor.move_left());
-        assert_eq!(cursor.peek_right(), Some(&1));
+        assert!(!cursor.move_prev());
+        assert!(cursor.move_next());
+        assert_eq!(cursor.peek_before(), Some(&0));
+        assert_eq!(cursor.peek_after(), Some(&1));
+        assert!(cursor.move_next());
+        assert!(!cursor.move_next());
+        assert_eq!(cursor.peek_before(), Some(&1));
+        assert!(cursor.move_prev());
+        assert_eq!(cursor.peek_after(), Some(&1));
     }
 
     #[test]
     fn remove_on_each_side() {
         let mut list = list_of(&[0, 1, 2]);
         let mut cursor = list.cursor_mut_at_start();
-        cursor.move_right();
-        assert_eq!(cursor.remove_left(), Some(0));
-        assert_eq!(cursor.remove_left(), None);
-        assert_eq!(cursor.remove_right(), Some(1));
-        assert_eq!(cursor.peek_right(), Some(&2));
-        assert_eq!(cursor.remove_right(), Some(2));
-        assert_eq!(cursor.remove_right(), None);
+        cursor.move_next();
+        assert_eq!(cursor.remove_before(), Some(0));
+        assert_eq!(cursor.remove_before(), None);
+        assert_eq!(cursor.remove_after(), Some(1));
+        assert_eq!(cursor.peek_after(), Some(&2));
+        assert_eq!(cursor.remove_after(), Some(2));
+        assert_eq!(cursor.remove_after(), None);
         assert!(list.is_empty());
     }
 
     #[test]
-    fn splice_left_puts_cursor_after_spliced() {
+    fn splice_before_puts_cursor_after_spliced() {
         let mut list = list_of(&[0, 3]);
         let mut cursor = list.cursor_mut_at_start();
-        cursor.move_right();
-        cursor.splice_left(list_of(&[1, 2]));
-        assert_eq!(cursor.peek_left(), Some(&2));
-        assert_eq!(cursor.peek_right(), Some(&3));
+        cursor.move_next();
+        cursor.splice_before(list_of(&[1, 2]));
+        assert_eq!(cursor.peek_before(), Some(&2));
+        assert_eq!(cursor.peek_after(), Some(&3));
         assert_eq!(list.items, [0, 1, 2, 3]);
     }
 
     #[test]
-    fn splice_right_keeps_cursor_before_spliced() {
+    fn splice_after_keeps_cursor_before_spliced() {
         let mut list = list_of(&[0, 3]);
         let mut cursor = list.cursor_mut_at_start();
-        cursor.move_right();
-        cursor.splice_right(list_of(&[1, 2]));
-        assert_eq!(cursor.peek_left(), Some(&0));
-        assert_eq!(cursor.peek_right(), Some(&1));
+        cursor.move_next();
+        cursor.splice_after(list_of(&[1, 2]));
+        assert_eq!(cursor.peek_before(), Some(&0));
+        assert_eq!(cursor.peek_after(), Some(&1));
         assert_eq!(list.items, [0, 1, 2, 3]);
     }
 }

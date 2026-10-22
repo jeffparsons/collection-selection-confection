@@ -56,7 +56,7 @@ mod tests {
         let mut list = LinkedList::new();
         let mut cursor = list.cursor_mut_at_start();
         for &value in values {
-            cursor.insert_left(value);
+            cursor.insert_before(value);
         }
         list
     }

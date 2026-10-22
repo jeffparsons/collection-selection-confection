@@ -28,7 +28,7 @@ impl<'a, T> SelectionMut<'a, T> {
         self.start == self.end
     }
 
-    pub fn move_start_left(&mut self) -> bool {
+    pub fn move_start_prev(&mut self) -> bool {
         if self.start == 0 {
             return false;
         }
@@ -36,7 +36,7 @@ impl<'a, T> SelectionMut<'a, T> {
         true
     }
 
-    pub fn move_start_right(&mut self) -> bool {
+    pub fn move_start_next(&mut self) -> bool {
         if self.start == self.end {
             return false;
         }
@@ -44,7 +44,7 @@ impl<'a, T> SelectionMut<'a, T> {
         true
     }
 
-    pub fn move_end_left(&mut self) -> bool {
+    pub fn move_end_prev(&mut self) -> bool {
         if self.end == self.start {
             return false;
         }
@@ -52,7 +52,7 @@ impl<'a, T> SelectionMut<'a, T> {
         true
     }
 
-    pub fn move_end_right(&mut self) -> bool {
+    pub fn move_end_next(&mut self) -> bool {
         if self.end == self.list.items.len() {
             return false;
         }
@@ -150,45 +150,45 @@ mod tests {
     fn cursor_round_trip() {
         let mut list = list_of(&[0, 1]);
         let mut cursor = list.cursor_mut_at_start();
-        cursor.move_right();
+        cursor.move_next();
         let selection = cursor.into_selection();
         assert!(selection.is_empty());
         assert_eq!(selection.peek_before_start(), Some(&0));
         assert_eq!(selection.peek_after_end(), Some(&1));
         let cursor = selection.into_cursor_at_end();
-        assert_eq!(cursor.peek_left(), Some(&0));
-        assert_eq!(cursor.peek_right(), Some(&1));
+        assert_eq!(cursor.peek_before(), Some(&0));
+        assert_eq!(cursor.peek_after(), Some(&1));
     }
 
     #[test]
     fn into_cursor_at_each_end() {
         let mut list = list_of(&[0, 1, 2]);
         let mut selection = list.cursor_mut_at_start().into_selection();
-        selection.move_end_right();
-        selection.move_end_right();
+        selection.move_end_next();
+        selection.move_end_next();
         let cursor = selection.into_cursor_at_end();
-        assert_eq!(cursor.peek_left(), Some(&1));
+        assert_eq!(cursor.peek_before(), Some(&1));
         let mut selection = cursor.into_selection();
-        selection.move_start_left();
+        selection.move_start_prev();
         let cursor = selection.into_cursor_at_start();
-        assert_eq!(cursor.peek_left(), Some(&0));
-        assert_eq!(cursor.peek_right(), Some(&1));
+        assert_eq!(cursor.peek_before(), Some(&0));
+        assert_eq!(cursor.peek_after(), Some(&1));
     }
 
     #[test]
     fn boundaries_stop_at_each_other_and_ends() {
         let mut list = list_of(&[0, 1]);
         let mut selection = list.cursor_mut_at_start().into_selection();
-        assert!(!selection.move_start_left());
-        assert!(!selection.move_start_right());
-        assert!(!selection.move_end_left());
-        assert!(selection.move_end_right());
-        assert!(selection.move_end_right());
-        assert!(!selection.move_end_right());
+        assert!(!selection.move_start_prev());
+        assert!(!selection.move_start_next());
+        assert!(!selection.move_end_prev());
+        assert!(selection.move_end_next());
+        assert!(selection.move_end_next());
+        assert!(!selection.move_end_next());
         assert_eq!(selection.len(), 2);
-        assert!(selection.move_start_right());
-        assert!(selection.move_start_right());
-        assert!(!selection.move_start_right());
+        assert!(selection.move_start_next());
+        assert!(selection.move_start_next());
+        assert!(!selection.move_start_next());
         assert!(selection.is_empty());
     }
 
@@ -198,10 +198,10 @@ mod tests {
         let mut selection = list.cursor_mut_at_start().into_selection();
         assert_eq!(selection.first(), None);
         assert_eq!(selection.last(), None);
-        selection.move_end_right();
-        selection.move_end_right();
-        selection.move_end_right();
-        selection.move_start_right();
+        selection.move_end_next();
+        selection.move_end_next();
+        selection.move_end_next();
+        selection.move_start_next();
         assert_eq!(selection.first(), Some(&1));
         assert_eq!(selection.last(), Some(&2));
         *selection.first_mut().unwrap() += 10;
@@ -213,9 +213,9 @@ mod tests {
     fn peek_mut_outside_selection() {
         let mut list = list_of(&[0, 1, 2]);
         let mut selection = list.cursor_mut_at_start().into_selection();
-        selection.move_end_right();
-        selection.move_end_right();
-        selection.move_start_right();
+        selection.move_end_next();
+        selection.move_end_next();
+        selection.move_start_next();
         *selection.peek_before_start_mut().unwrap() += 10;
         *selection.peek_after_end_mut().unwrap() += 20;
         assert_eq!(list.items, [10, 1, 22]);
@@ -225,7 +225,7 @@ mod tests {
     fn insert_outside_selection() {
         let mut list = list_of(&[1]);
         let mut selection = list.cursor_mut_at_start().into_selection();
-        selection.move_end_right();
+        selection.move_end_next();
         selection.insert_before_start(0);
         selection.insert_after_end(2);
         assert_eq!(selection.iter().copied().collect::<Vec<_>>(), [1]);
@@ -236,10 +236,10 @@ mod tests {
     fn take_empties_selection() {
         let mut list = list_of(&[0, 1, 2, 3]);
         let mut selection = list.cursor_mut_at_start().into_selection();
-        selection.move_end_right();
-        selection.move_end_right();
-        selection.move_end_right();
-        selection.move_start_right();
+        selection.move_end_next();
+        selection.move_end_next();
+        selection.move_end_next();
+        selection.move_start_next();
         let taken = selection.take();
         assert!(selection.is_empty());
         assert_eq!(selection.peek_before_start(), Some(&0));
@@ -252,9 +252,9 @@ mod tests {
     fn replace_selects_new_contents() {
         let mut list = list_of(&[0, 1, 2]);
         let mut selection = list.cursor_mut_at_start().into_selection();
-        selection.move_end_right();
-        selection.move_end_right();
-        selection.move_start_right();
+        selection.move_end_next();
+        selection.move_end_next();
+        selection.move_start_next();
         let old = selection.replace(list_of(&[10, 11, 12]));
         assert_eq!(selection.iter().copied().collect::<Vec<_>>(), [10, 11, 12]);
         assert_eq!(selection.peek_after_end(), Some(&2));
@@ -266,9 +266,9 @@ mod tests {
     fn iter_mut_within_selection() {
         let mut list = list_of(&[0, 1, 2]);
         let mut selection = list.cursor_mut_at_start().into_selection();
-        selection.move_end_right();
-        selection.move_end_right();
-        selection.move_start_right();
+        selection.move_end_next();
+        selection.move_end_next();
+        selection.move_start_next();
         for value in selection.iter_mut() {
             *value *= 10;
         }
