@@ -1,6 +1,11 @@
 [package]
 name = "collection-selection-confection"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2024"
+description = "Exploring a new way to work with Rust collections"
+repository = "https://github.com/jeffparsons/collection-selection-confection"
+license = "MIT OR Apache-2.0"
+keywords = ["collections", "cursor", "selection", "linked-list"]
+categories = ["data-structures"]
 
 [dependencies]
