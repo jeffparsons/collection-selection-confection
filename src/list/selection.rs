@@ -60,6 +60,14 @@ impl<'a, T> SelectionMut<'a, T> {
         true
     }
 
+    pub fn absorb_all_before(&mut self) {
+        self.start = 0;
+    }
+
+    pub fn absorb_all_after(&mut self) {
+        self.end = self.list.items.len();
+    }
+
     pub fn first(&self) -> Option<&T> {
         if self.is_empty() {
             return None;
@@ -200,6 +208,21 @@ mod tests {
         assert!(selection.move_start_next());
         assert!(!selection.move_start_next());
         assert!(selection.is_empty());
+    }
+
+    #[test]
+    fn absorb_all_on_each_side() {
+        let mut list = list_of(&[0, 1, 2, 3]);
+        let mut selection = list.cursor_mut_at_start().into_selection();
+        selection.move_end_next();
+        selection.move_end_next();
+        selection.move_start_next();
+        selection.absorb_all_before();
+        assert_eq!(selection.iter().copied().collect::<Vec<_>>(), [0, 1]);
+        selection.absorb_all_after();
+        assert_eq!(selection.iter().copied().collect::<Vec<_>>(), [0, 1, 2, 3]);
+        assert_eq!(selection.peek_before_start(), None);
+        assert_eq!(selection.peek_after_end(), None);
     }
 
     #[test]
