@@ -134,6 +134,38 @@ impl<'a, T> SelectionMut<'a, T> {
         self.list.items.insert(self.end, value);
     }
 
+    pub fn remove_before_start(&mut self) -> Option<T> {
+        if self.start == 0 {
+            return None;
+        }
+        self.start -= 1;
+        self.end -= 1;
+        Some(self.list.items.remove(self.start))
+    }
+
+    pub fn remove_first(&mut self) -> Option<T> {
+        if self.is_empty() {
+            return None;
+        }
+        self.end -= 1;
+        Some(self.list.items.remove(self.start))
+    }
+
+    pub fn remove_last(&mut self) -> Option<T> {
+        if self.is_empty() {
+            return None;
+        }
+        self.end -= 1;
+        Some(self.list.items.remove(self.end))
+    }
+
+    pub fn remove_after_end(&mut self) -> Option<T> {
+        if self.end == self.list.items.len() {
+            return None;
+        }
+        Some(self.list.items.remove(self.end))
+    }
+
     pub fn take(&mut self) -> LinkedList<T> {
         let items = self.list.items.drain(self.start..self.end).collect();
         self.end = self.start;
@@ -292,6 +324,41 @@ mod tests {
         assert_eq!(selection.first(), Some(&1));
         assert_eq!(selection.last(), Some(&2));
         assert_eq!(list.items, [0, 1, 2, 3]);
+    }
+
+    #[test]
+    fn remove_outside_selection() {
+        let mut list = list_of(&[0, 1, 2]);
+        let mut selection = list.cursor_mut_at_start().into_selection();
+        selection.move_end_next();
+        selection.move_end_next();
+        selection.move_start_next();
+        assert_eq!(selection.remove_before_start(), Some(0));
+        assert_eq!(selection.remove_after_end(), Some(2));
+        assert_eq!(selection.remove_before_start(), None);
+        assert_eq!(selection.remove_after_end(), None);
+        assert_eq!(selection.iter().copied().collect::<Vec<_>>(), [1]);
+        assert_eq!(list.items, [1]);
+    }
+
+    #[test]
+    fn remove_inside_selection() {
+        let mut list = list_of(&[0, 1, 2, 3, 4]);
+        let mut selection = list.cursor_mut_at_start().into_selection();
+        selection.move_end_next();
+        selection.move_end_next();
+        selection.move_end_next();
+        selection.move_end_next();
+        selection.move_start_next();
+        assert_eq!(selection.remove_first(), Some(1));
+        assert_eq!(selection.remove_last(), Some(3));
+        assert_eq!(selection.iter().copied().collect::<Vec<_>>(), [2]);
+        assert_eq!(selection.peek_before_start(), Some(&0));
+        assert_eq!(selection.peek_after_end(), Some(&4));
+        assert_eq!(selection.remove_last(), Some(2));
+        assert_eq!(selection.remove_first(), None);
+        assert_eq!(selection.remove_last(), None);
+        assert_eq!(list.items, [0, 4]);
     }
 
     #[test]
