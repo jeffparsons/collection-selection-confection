@@ -32,10 +32,12 @@ impl<T> LinkedList<T> {
         self.items.iter_mut()
     }
 
+    /// Returns a cursor in the gap before the first element.
     pub fn cursor_mut_at_start<'a>(&'a mut self) -> CursorMut<'a, T> {
         CursorMut::new(self, 0)
     }
 
+    /// Returns a cursor in the gap after the last element.
     pub fn cursor_mut_at_end<'a>(&'a mut self) -> CursorMut<'a, T> {
         let index = self.items.len();
         CursorMut::new(self, index)

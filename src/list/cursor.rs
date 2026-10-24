@@ -12,10 +12,14 @@ impl<'a, T> CursorMut<'a, T> {
         Self { list, index }
     }
 
+    /// Converts into an empty selection at the cursor's position.
     pub fn into_selection(self) -> SelectionMut<'a, T> {
         SelectionMut::new(self.list, self.index, self.index)
     }
 
+    /// Moves back one element.
+    ///
+    /// Returns `false`, without moving, if already at the start.
     pub fn move_prev(&mut self) -> bool {
         if self.index == 0 {
             return false;
@@ -24,6 +28,9 @@ impl<'a, T> CursorMut<'a, T> {
         true
     }
 
+    /// Moves forward one element.
+    ///
+    /// Returns `false`, without moving, if already at the end.
     pub fn move_next(&mut self) -> bool {
         if self.index == self.list.items.len() {
             return false;
@@ -32,11 +39,13 @@ impl<'a, T> CursorMut<'a, T> {
         true
     }
 
+    /// Returns the element just before the cursor.
     pub fn peek_before(&self) -> Option<&T> {
         let i = self.index.checked_sub(1)?;
         self.list.items.get(i)
     }
 
+    /// Returns the element just after the cursor.
     pub fn peek_after(&self) -> Option<&T> {
         self.list.items.get(self.index)
     }
@@ -50,15 +59,18 @@ impl<'a, T> CursorMut<'a, T> {
         self.list.items.get_mut(self.index)
     }
 
+    /// Inserts an element just before the cursor.
     pub fn insert_before(&mut self, value: T) {
         self.list.items.insert(self.index, value);
         self.index += 1;
     }
 
+    /// Inserts an element just after the cursor.
     pub fn insert_after(&mut self, value: T) {
         self.list.items.insert(self.index, value);
     }
 
+    /// Removes and returns the element just before the cursor.
     pub fn remove_before(&mut self) -> Option<T> {
         if self.index == 0 {
             return None;
@@ -67,6 +79,7 @@ impl<'a, T> CursorMut<'a, T> {
         Some(self.list.items.remove(self.index))
     }
 
+    /// Removes and returns the element just after the cursor.
     pub fn remove_after(&mut self) -> Option<T> {
         if self.index == self.list.items.len() {
             return None;
@@ -74,16 +87,19 @@ impl<'a, T> CursorMut<'a, T> {
         Some(self.list.items.remove(self.index))
     }
 
+    /// Inserts all elements of `other` just before the cursor.
     pub fn splice_before(&mut self, other: LinkedList<T>) {
         let len = other.items.len();
         self.list.items.splice(self.index..self.index, other.items);
         self.index += len;
     }
 
+    /// Inserts all elements of `other` just after the cursor.
     pub fn splice_after(&mut self, other: LinkedList<T>) {
         self.list.items.splice(self.index..self.index, other.items);
     }
 
+    /// Splits off and returns all elements before the cursor.
     pub fn split_before(&mut self) -> LinkedList<T> {
         let after = self.list.items.split_off(self.index);
         let before = std::mem::replace(&mut self.list.items, after);
@@ -91,6 +107,7 @@ impl<'a, T> CursorMut<'a, T> {
         LinkedList { items: before }
     }
 
+    /// Splits off and returns all elements after the cursor.
     pub fn split_after(&mut self) -> LinkedList<T> {
         LinkedList {
             items: self.list.items.split_off(self.index),

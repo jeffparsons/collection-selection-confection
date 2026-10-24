@@ -12,10 +12,12 @@ impl<'a, T> SelectionMut<'a, T> {
         Self { list, start, end }
     }
 
+    /// Converts into a cursor at the start of the selection.
     pub fn into_cursor_at_start(self) -> CursorMut<'a, T> {
         CursorMut::new(self.list, self.start)
     }
 
+    /// Converts into a cursor at the end of the selection.
     pub fn into_cursor_at_end(self) -> CursorMut<'a, T> {
         CursorMut::new(self.list, self.end)
     }
@@ -28,6 +30,9 @@ impl<'a, T> SelectionMut<'a, T> {
         self.start == self.end
     }
 
+    /// Grows the selection backward by one.
+    ///
+    /// Returns `false`, without moving, if already at the start of the list.
     pub fn move_start_prev(&mut self) -> bool {
         if self.start == 0 {
             return false;
@@ -36,6 +41,9 @@ impl<'a, T> SelectionMut<'a, T> {
         true
     }
 
+    /// Shrinks the selection from the start by one.
+    ///
+    /// Returns `false`, without moving, if the selection is empty.
     pub fn move_start_next(&mut self) -> bool {
         if self.start == self.end {
             return false;
@@ -44,6 +52,9 @@ impl<'a, T> SelectionMut<'a, T> {
         true
     }
 
+    /// Shrinks the selection from the end by one.
+    ///
+    /// Returns `false`, without moving, if the selection is empty.
     pub fn move_end_prev(&mut self) -> bool {
         if self.end == self.start {
             return false;
@@ -52,6 +63,9 @@ impl<'a, T> SelectionMut<'a, T> {
         true
     }
 
+    /// Grows the selection forward by one.
+    ///
+    /// Returns `false`, without moving, if already at the end of the list.
     pub fn move_end_next(&mut self) -> bool {
         if self.end == self.list.items.len() {
             return false;
@@ -60,14 +74,17 @@ impl<'a, T> SelectionMut<'a, T> {
         true
     }
 
+    /// Grows the selection to the start of the list.
     pub fn absorb_all_before(&mut self) {
         self.start = 0;
     }
 
+    /// Grows the selection to the end of the list.
     pub fn absorb_all_after(&mut self) {
         self.end = self.list.items.len();
     }
 
+    /// Returns the first selected element.
     pub fn first(&self) -> Option<&T> {
         if self.is_empty() {
             return None;
@@ -75,6 +92,7 @@ impl<'a, T> SelectionMut<'a, T> {
         self.list.items.get(self.start)
     }
 
+    /// Returns the last selected element.
     pub fn last(&self) -> Option<&T> {
         if self.is_empty() {
             return None;
@@ -96,11 +114,13 @@ impl<'a, T> SelectionMut<'a, T> {
         self.list.items.get_mut(self.end - 1)
     }
 
+    /// Returns the element just before the selection.
     pub fn peek_before_start(&self) -> Option<&T> {
         let i = self.start.checked_sub(1)?;
         self.list.items.get(i)
     }
 
+    /// Returns the element just after the selection.
     pub fn peek_after_end(&self) -> Option<&T> {
         self.list.items.get(self.end)
     }
@@ -114,26 +134,31 @@ impl<'a, T> SelectionMut<'a, T> {
         self.list.items.get_mut(self.end)
     }
 
+    /// Inserts an element just before the selection.
     pub fn insert_before_start(&mut self, value: T) {
         self.list.items.insert(self.start, value);
         self.start += 1;
         self.end += 1;
     }
 
+    /// Inserts an element at the start of the selection.
     pub fn insert_at_start(&mut self, value: T) {
         self.list.items.insert(self.start, value);
         self.end += 1;
     }
 
+    /// Inserts an element at the end of the selection.
     pub fn insert_at_end(&mut self, value: T) {
         self.list.items.insert(self.end, value);
         self.end += 1;
     }
 
+    /// Inserts an element just after the selection.
     pub fn insert_after_end(&mut self, value: T) {
         self.list.items.insert(self.end, value);
     }
 
+    /// Removes and returns the element just before the selection.
     pub fn remove_before_start(&mut self) -> Option<T> {
         if self.start == 0 {
             return None;
@@ -143,6 +168,7 @@ impl<'a, T> SelectionMut<'a, T> {
         Some(self.list.items.remove(self.start))
     }
 
+    /// Removes and returns the first selected element.
     pub fn remove_first(&mut self) -> Option<T> {
         if self.is_empty() {
             return None;
@@ -151,6 +177,7 @@ impl<'a, T> SelectionMut<'a, T> {
         Some(self.list.items.remove(self.start))
     }
 
+    /// Removes and returns the last selected element.
     pub fn remove_last(&mut self) -> Option<T> {
         if self.is_empty() {
             return None;
@@ -159,6 +186,7 @@ impl<'a, T> SelectionMut<'a, T> {
         Some(self.list.items.remove(self.end))
     }
 
+    /// Removes and returns the element just after the selection.
     pub fn remove_after_end(&mut self) -> Option<T> {
         if self.end == self.list.items.len() {
             return None;
@@ -166,12 +194,18 @@ impl<'a, T> SelectionMut<'a, T> {
         Some(self.list.items.remove(self.end))
     }
 
+    /// Removes and returns the selected elements, leaving the selection empty.
     pub fn take(&mut self) -> LinkedList<T> {
         let items = self.list.items.drain(self.start..self.end).collect();
         self.end = self.start;
         LinkedList { items }
     }
 
+    /// Replaces the selected elements with `other`.
+    ///
+    /// Afterwards, the selection covers exactly the elements from `other`.
+    ///
+    /// Returns the previously selected elements.
     pub fn replace(&mut self, other: LinkedList<T>) -> LinkedList<T> {
         let len = other.items.len();
         let items = self
@@ -183,6 +217,7 @@ impl<'a, T> SelectionMut<'a, T> {
         LinkedList { items }
     }
 
+    /// Iterates over the selected elements.
     pub fn iter(&self) -> impl DoubleEndedIterator<Item = &T> + ExactSizeIterator {
         self.list.items[self.start..self.end].iter()
     }
