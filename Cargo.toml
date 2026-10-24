@@ -1,6 +1,6 @@
 [package]
 name = "collection-selection-confection"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2024"
 description = "Exploring a new way to work with Rust collections"
 repository = "https://github.com/jeffparsons/collection-selection-confection"
